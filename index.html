@@ -126,12 +126,44 @@ function validateLeadPhone(){
 }
 leadName.addEventListener("input",validateLeadName);
 leadPhone.addEventListener("input",validateLeadPhone);
+window.addEventListener("pageshow",()=>{
+  leadForm.dataset.submitting="false";
+  const submitButton=leadForm.querySelector('button[type="submit"]');
+  submitButton.disabled=false;
+  submitButton.innerHTML='Перейти в WhatsApp <span aria-hidden="true">↗</span>';
+});
 leadForm.addEventListener("submit",e=>{
   e.preventDefault();
   validateLeadName();validateLeadPhone();
   if(!leadForm.reportValidity())return;
   const message="Здравствуйте, Евгения! Хочу оставить заявку с сайта.\n\nИмя: "+leadName.value.trim()+"\nТелефон: "+leadPhone.value.trim()+"\nИнтересует: "+leadPlatform;
-  window.location.assign("https://wa.me/77055818083?text="+encodeURIComponent(message));
+  if(leadForm.dataset.submitting==="true")return;
+  leadForm.dataset.submitting="true";
+  const submitButton=leadForm.querySelector('button[type="submit"]');
+  submitButton.disabled=true;
+  submitButton.textContent="Открываем WhatsApp…";
+  const whatsappUrl="https://wa.me/77055818083?text="+encodeURIComponent(message);
+  let redirected=false;
+  function openWhatsApp(){
+    if(redirected)return;
+    redirected=true;
+    window.location.assign(whatsappUrl);
+  }
+  // Give GTM conversion tags time to finish; still redirect if GTM is blocked.
+  const redirectTimer=window.setTimeout(openWhatsApp,1800);
+  window.dataLayer=window.dataLayer||[];
+  window.dataLayer.push({
+    event:"form_submit",
+    form_id:"lead-form",
+    form_name:"whatsapp_application",
+    lead_service:leadPlatform,
+    lead_destination:"whatsapp",
+    eventCallback:function(){
+      window.clearTimeout(redirectTimer);
+      openWhatsApp();
+    },
+    eventTimeout:1500
+  });
 });
 </script><script>const channelTabs=Array.from(document.querySelectorAll('[role="tab"]'));function activateChannel(tab){channelTabs.forEach(t=>{const active=t===tab;t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!active;});}channelTabs.forEach((t,i)=>{t.addEventListener('click',()=>activateChannel(t));t.addEventListener('keydown',e=>{let n;if(e.key==='ArrowRight')n=(i+1)%channelTabs.length;if(e.key==='ArrowLeft')n=(i-1+channelTabs.length)%channelTabs.length;if(e.key==='Home')n=0;if(e.key==='End')n=channelTabs.length-1;if(n!==undefined){e.preventDefault();activateChannel(channelTabs[n]);channelTabs[n].focus();}});});</script></body></html>
 
